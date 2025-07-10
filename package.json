@@ -1,0 +1,11 @@
+{
+  "name": "com.raiden.buildmanager",
+  "version": "1.0.0",
+  "displayName": "Build Manager",
+  "unity": "2022.3",
+  "description": "Build Manager",
+  "author": {
+    "name": "Raidenxd2",
+    "url": "https://raidenxd2.github.io/"
+  }
+}
