@@ -12,4 +12,12 @@ public class BuildManagerSettings : ScriptableObject
     public bool BuildAssetBundles = true;
     public bool RemoveBurstDebugInformation = true;
     public bool IncrementBuildNumber = true;
+    public CompressionType CompressionType;
+}
+
+public enum CompressionType
+{
+    Default,
+    LZ4,
+    LZ4HC
 }

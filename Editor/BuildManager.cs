@@ -43,6 +43,8 @@ public class BuildManager : EditorWindow
         bms.BuildAddressables = GUILayout.Toggle(bms.BuildAddressables, "Build Addressables");
         bms.RemoveBurstDebugInformation = GUILayout.Toggle(bms.RemoveBurstDebugInformation, "Remove BurstDebugInformation");
         bms.IncrementBuildNumber = GUILayout.Toggle(bms.IncrementBuildNumber, "Increment Build Number");
+        GUILayout.Space(25);
+        bms.CompressionType = (CompressionType)EditorGUI.EnumPopup(new Rect(3, 109, position.width - 6, 15), new GUIContent("Compression Type", ""), bms.CompressionType);
         bms.BuildCount = EditorGUILayout.IntField("Build Count", bms.BuildCount);
         bms.Branch = EditorGUILayout.TextField("Branch", bms.Branch);
         bms.VersionPrefix = EditorGUILayout.TextField("Version Prefix", bms.VersionPrefix);
@@ -230,7 +232,19 @@ public class BuildManager : EditorWindow
         }
         else
         {
-            bo = BuildOptions.ShowBuiltPlayer | BuildOptions.CompressWithLz4;
+            bo = BuildOptions.ShowBuiltPlayer;
+        }
+
+        switch (bms.CompressionType)
+        {
+            case CompressionType.Default:
+                break;
+            case CompressionType.LZ4:
+                bo |= BuildOptions.CompressWithLz4;
+                break;
+            case CompressionType.LZ4HC:
+                bo |= BuildOptions.CompressWithLz4HC;
+                break;
         }
 
         BuildPipeline.BuildPlayer(scenes.ToArray(), exeName, bt, bo);
