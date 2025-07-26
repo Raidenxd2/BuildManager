@@ -271,15 +271,6 @@ public class BuildManager : EditorWindow
             }
         }
 
-        // Analytics-related file deletion
-        if (bt == BuildTarget.StandaloneWindows || bt == BuildTarget.StandaloneWindows64 || bt == BuildTarget.StandaloneLinux64)
-        {
-            DeleteFileIfExists(BuildPath + "/" + bms.ExeName + "_Data/Managed/UnityEngine.UnityAnalyticsCommonModule.dll");
-            DeleteFileIfExists(BuildPath + "/" + bms.ExeName + "_Data/Managed/UnityEngine.UnityAnalyticsCommonModule.pdb");
-            DeleteFileIfExists(BuildPath + "/" + bms.ExeName + "_Data/Managed/UnityEngine.UnityAnalyticsModule.dll");
-            DeleteFileIfExists(BuildPath + "/" + bms.ExeName + "_Data/Managed/UnityEngine.UnityAnalyticsModule.pdb");
-        }
-
         // Delete BurstDebugInformation if its enabled
         if (bms.RemoveBurstDebugInformation)
         {
