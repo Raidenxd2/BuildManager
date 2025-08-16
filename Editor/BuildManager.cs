@@ -36,9 +36,7 @@ public class BuildManager : EditorWindow
         }
 
         bms.DevBuild = GUILayout.Toggle(bms.DevBuild, "Development Build");
-#if BUILDMANAGER_ADDRESSABLES
         bms.BuildAssetBundles = GUILayout.Toggle(bms.BuildAssetBundles, "Build AssetBundles");
-#endif
         bms.StripUnneededFilesFromAssetBundleBuild = GUILayout.Toggle(bms.StripUnneededFilesFromAssetBundleBuild, "Remove unneeded files from AssetBundle build");
         bms.BuildAddressables = GUILayout.Toggle(bms.BuildAddressables, "Build Addressables");
         bms.RemoveBurstDebugInformation = GUILayout.Toggle(bms.RemoveBurstDebugInformation, "Remove BurstDebugInformation");
@@ -187,7 +185,12 @@ public class BuildManager : EditorWindow
             LoadBms();
         }
 
-        string BuildPath = Application.dataPath + "/../Builds/" + bms.BuildCount;
+        string BuildPath = Application.dataPath + "/../Builds/" + bms.BuildCount + "_" + bt;
+
+        if (winArm64)
+        {
+            BuildPath += "_" + "ARM64";
+        }
 
         if (!Directory.Exists(Application.dataPath + "/../Builds"))
         {
