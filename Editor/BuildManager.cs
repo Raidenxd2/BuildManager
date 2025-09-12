@@ -35,14 +35,14 @@ public class BuildManager : EditorWindow
             LoadBms();
         }
 
-        bms.DevBuild = GUILayout.Toggle(bms.DevBuild, "Development Build");
         bms.BuildAssetBundles = GUILayout.Toggle(bms.BuildAssetBundles, "Build AssetBundles");
-        bms.StripUnneededFilesFromAssetBundleBuild = GUILayout.Toggle(bms.StripUnneededFilesFromAssetBundleBuild, "Remove unneeded files from AssetBundle build");
+        bms.RemoveManifestFilesFromAssetBundleBuild = GUILayout.Toggle(bms.RemoveManifestFilesFromAssetBundleBuild, "Remove manifest files from AssetBundle build");
         bms.BuildAddressables = GUILayout.Toggle(bms.BuildAddressables, "Build Addressables");
         bms.RemoveBurstDebugInformation = GUILayout.Toggle(bms.RemoveBurstDebugInformation, "Remove BurstDebugInformation");
         bms.IncrementBuildNumber = GUILayout.Toggle(bms.IncrementBuildNumber, "Increment Build Number");
-        GUILayout.Space(25);
-        bms.CompressionType = (CompressionType)EditorGUI.EnumPopup(new Rect(3, 109, position.width - 6, 15), new GUIContent("Compression Type", ""), bms.CompressionType);
+        bms.CompressionType = (CompressionType)EditorGUILayout.EnumPopup("Compression Type", bms.CompressionType);
+        bms.PlayerBuildOptions = (BuildOptions)EditorGUILayout.EnumFlagsField("Player Build Options", bms.PlayerBuildOptions);
+        bms.AssetBundleBuildOptions = (BuildAssetBundleOptions)EditorGUILayout.EnumFlagsField("AssetBundle Build Options", bms.AssetBundleBuildOptions);
         bms.BuildCount = EditorGUILayout.IntField("Build Count", bms.BuildCount);
         bms.Branch = EditorGUILayout.TextField("Branch", bms.Branch);
         bms.VersionPrefix = EditorGUILayout.TextField("Version Prefix", bms.VersionPrefix);
@@ -55,36 +55,36 @@ public class BuildManager : EditorWindow
 
         if (GUILayout.Button("Build Windows x64"))
         {
-            Build(BuildTarget.StandaloneWindows64);
+            Build(BuildTarget.StandaloneWindows64, bms);
         }
 
         if (GUILayout.Button("Build Windows x86"))
         {
-            Build(BuildTarget.StandaloneWindows);
+            Build(BuildTarget.StandaloneWindows, bms);
         }
 
         if (GUILayout.Button("Build Windows ARM64"))
         {
-            Build(BuildTarget.StandaloneWindows64, true);
+            Build(BuildTarget.StandaloneWindows64, bms, true);
         }
 
         if (GUILayout.Button("Build macOS"))
         {
-            Build(BuildTarget.StandaloneOSX);
+            Build(BuildTarget.StandaloneOSX, bms);
         }
 
         if (GUILayout.Button("Build Linux"))
         {
-            Build(BuildTarget.StandaloneLinux64);
+            Build(BuildTarget.StandaloneLinux64, bms);
         }
 
         if (GUILayout.Button("Build Android"))
         {
-            Build(BuildTarget.Android);
+            Build(BuildTarget.Android, bms);
         }
     }
 
-    private void Build(BuildTarget bt, bool winArm64 = false)
+    public static void Build(BuildTarget bt, BuildManagerSettings bms, bool winArm64 = false)
     {
         if (bms.IncrementBuildNumber)
         {
@@ -160,7 +160,7 @@ public class BuildManager : EditorWindow
 
         if (bms.BuildAssetBundles)
         {
-            BuildAssetBundles(bt);
+            BuildAssetBundles(bt, bms);
         }
 
 #if BUILDMANAGER_ADDRESSABLES
@@ -223,20 +223,7 @@ public class BuildManager : EditorWindow
                 break;
         }
 
-        BuildOptions bo = BuildOptions.None;
-
-        if (bms.DevBuild)
-        {
-            bo = BuildOptions.ShowBuiltPlayer | BuildOptions.Development;
-        }
-        else if (bt == BuildTarget.Android)
-        {
-            bo = BuildOptions.ShowBuiltPlayer;
-        }
-        else
-        {
-            bo = BuildOptions.ShowBuiltPlayer;
-        }
+        BuildOptions bo = bms.PlayerBuildOptions;
 
         switch (bms.CompressionType)
         {
@@ -317,36 +304,37 @@ public class BuildManager : EditorWindow
             LoadBms();
         }
 
-        BuildAssetBundles(EditorUserBuildSettings.activeBuildTarget);
+        BuildAssetBundles(EditorUserBuildSettings.activeBuildTarget, bms);
 
         AssetDatabase.Refresh();
     }
 
-    private static void BuildAssetBundles(BuildTarget bt)
+    public static void BuildAssetBundles(BuildTarget bt, BuildManagerSettings bms)
     {
-        string bundleDirectory = "Assets/AssetBundleBuild";
-        string bundleDirectoryName = "AssetBundleBuild";
+        string bundleDirectory = "Assets/StreamingAssets/Bundles";
+        string bundleDirectoryName = "Bundles";
 
         if (!Directory.Exists(bundleDirectory))
         {
             Directory.CreateDirectory(bundleDirectory);
         }
 
-        BuildPipeline.BuildAssetBundles(bundleDirectory, BuildAssetBundleOptions.AssetBundleStripUnityVersion, bt);
+        BuildPipeline.BuildAssetBundles(bundleDirectory, bms.AssetBundleBuildOptions, bt);
 
-        // Removes meta, manifest, and other files from the built AssetBundles
-        if (bms.StripUnneededFilesFromAssetBundleBuild)
+        // Removes manifest files from the built AssetBundles
+        if (bms.RemoveManifestFilesFromAssetBundleBuild)
         {
             File.Delete(bundleDirectory + "/" + bundleDirectoryName);
             File.Delete(bundleDirectory + "/" + bundleDirectoryName + ".meta");
             File.Delete(bundleDirectory + "/" + bundleDirectoryName + ".manifest");
+            File.Delete(bundleDirectory + "/" + bundleDirectoryName + ".manifest.meta");
 
             DirectoryInfo buildFiles = new(bundleDirectory);
             if (buildFiles.Exists)
             {
                 foreach (var file in buildFiles.EnumerateFiles())
                 {
-                    if (file.Extension == "manifest")
+                    if (file.Extension == ".manifest")
                     {
                         File.Delete(file.FullName);
                         if (File.Exists(file.FullName + ".meta"))
@@ -358,61 +346,13 @@ public class BuildManager : EditorWindow
             }
             else
             {
-                Debug.LogError("(BuildManager) Assets/AssetBundlebuild doesn't exist? (Failed)");
+                Debug.LogError("(BuildManager) Assets/StreamingAssets/Bundles doesn't exist? (Failed)");
                 return;
             }
         }
-
-        if (!Directory.Exists("Assets/StreamingAssets/Bundles"))
-        {
-            Directory.CreateDirectory("Assets/StreamingAssets/Bundles");
-        }
-
-        DirectoryInfo bundlesFolder = new("Assets/StreamingAssets/Bundles");
-        if (bundlesFolder.Exists)
-        {
-            foreach (var file in bundlesFolder.EnumerateFiles())
-            {
-                Debug.Log("(BuildManager) Deleting built AssetBundle from StreamingAssets/Bundles " + file.Name);
-                File.Delete(file.FullName);
-            }
-        }
-        else
-        {
-            Debug.LogError("(BuildManager) Assets/StreamingAssets/Bundles doesn't exist? (Failed)");
-            return;
-        }
-
-        DirectoryInfo buildFiles2 = new(bundleDirectory);
-        if (buildFiles2.Exists)
-        {
-            foreach (var file in buildFiles2.EnumerateFiles())
-            {
-                if (file.Extension == "meta")
-                {
-                    continue;
-                }
-
-                Debug.Log("(BuildManager) Copying AssetBundle " + file.Name + " (" + file.Length + ") to StreamingAssets");
-                File.Copy(file.FullName, "Assets/StreamingAssets/Bundles/" + file.Name);
-            }
-        }
-        else
-        {
-            Debug.LogError("(BuildManager) Assets/AssetBundleBuild doesn't exist? (Failed)");
-            return;
-        }
     }
 
-    private void DeleteFileIfExists(string path)
-    {
-        if (File.Exists(path))
-        {
-            File.Delete(path);
-        }
-    }
-
-    private void SaveSettings()
+    public static void SaveSettings()
     {
         EditorUtility.SetDirty(bms);
         AssetDatabase.Refresh();
