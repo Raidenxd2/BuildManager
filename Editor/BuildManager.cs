@@ -38,6 +38,7 @@ public class BuildManager : EditorWindow
         bms.BuildAssetBundles = GUILayout.Toggle(bms.BuildAssetBundles, "Build AssetBundles");
         bms.RemoveManifestFilesFromAssetBundleBuild = GUILayout.Toggle(bms.RemoveManifestFilesFromAssetBundleBuild, "Remove manifest files from AssetBundle build");
         bms.BuildAddressables = GUILayout.Toggle(bms.BuildAddressables, "Build Addressables");
+        bms.CopyPDBFiles = GUILayout.Toggle(bms.CopyPDBFiles, "Copy PDB files (Mono Windows, Linux and macOS only)");
         bms.RemoveBurstDebugInformation = GUILayout.Toggle(bms.RemoveBurstDebugInformation, "Remove BurstDebugInformation");
         bms.IncrementBuildNumber = GUILayout.Toggle(bms.IncrementBuildNumber, "Increment Build Number");
         bms.CompressionType = (CompressionType)EditorGUILayout.EnumPopup("Compression Type", bms.CompressionType);
@@ -290,6 +291,37 @@ public class BuildManager : EditorWindow
                     else
                     {
                         File.Copy("Assets/CopyToStreamingAssets/" + file.Name, BuildPath + "/" + bms.ExeName + "_Data/StreamingAssets/" + Path.GetFileName(file.Name));
+                    }
+                }
+            }
+        }
+
+        if (bms.CopyPDBFiles)
+        {
+            if ((bt == BuildTarget.StandaloneWindows || bt == BuildTarget.StandaloneWindows64 || bt == BuildTarget.StandaloneLinux64 || bt == BuildTarget.StandaloneOSX) && PlayerSettings.GetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone) != ScriptingImplementation.IL2CPP && PlayerSettings.GetManagedStrippingLevel(UnityEditor.Build.NamedBuildTarget.Standalone) == ManagedStrippingLevel.Disabled)
+            {
+                if (Directory.Exists("Library/Bee/PlayerScriptAssemblies"))
+                {
+                    DirectoryInfo boDir2 = new("Library/Bee/PlayerScriptAssemblies");
+                    FileInfo[] boInfo2 = boDir2.GetFiles("*.pdb");
+
+                    foreach (FileInfo file in boInfo2)
+                    {
+                        if (file.Extension == ".dll")
+                        {
+
+                        }
+                        else
+                        {
+                            if (bt == BuildTarget.StandaloneOSX)
+                            {
+                                File.Copy("Library/Bee/PlayerScriptAssemblies/" + file.Name, BuildPath + "/" + bms.ExeName + ".app/Contents/Resources/Data/Managed/" + Path.GetFileName(file.Name));
+                            }
+                            else
+                            {
+                                File.Copy("Library/Bee/PlayerScriptAssemblies/" + file.Name, BuildPath + "/" + bms.ExeName + "_Data/Managed/" + Path.GetFileName(file.Name));
+                            }
+                        }
                     }
                 }
             }

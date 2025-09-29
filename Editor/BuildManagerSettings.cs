@@ -10,6 +10,7 @@ public class BuildManagerSettings : ScriptableObject
     public bool BuildAddressables = true;
     public bool RemoveManifestFilesFromAssetBundleBuild = false;
     public bool BuildAssetBundles = true;
+    public bool CopyPDBFiles = true;
     public bool RemoveBurstDebugInformation = true;
     public bool IncrementBuildNumber = true;
     public BuildOptions PlayerBuildOptions = BuildOptions.ShowBuiltPlayer;
