@@ -35,6 +35,7 @@ public class BuildManager : EditorWindow
             LoadBms();
         }
 
+        bms.DedicatedServerBuild = GUILayout.Toggle(bms.DedicatedServerBuild, "Dedicated Server (Windows, Linux and macOS only)");
         bms.BuildAssetBundles = GUILayout.Toggle(bms.BuildAssetBundles, "Build AssetBundles");
         bms.RemoveManifestFilesFromAssetBundleBuild = GUILayout.Toggle(bms.RemoveManifestFilesFromAssetBundleBuild, "Remove manifest files from AssetBundle build");
         bms.BuildAddressables = GUILayout.Toggle(bms.BuildAddressables, "Build Addressables");
@@ -193,6 +194,11 @@ public class BuildManager : EditorWindow
             BuildPath += "_" + "ARM64";
         }
 
+        if (bms.DedicatedServerBuild)
+        {
+            BuildPath += "_" + "DedicatedServer";
+        }
+
         if (!Directory.Exists(Application.dataPath + "/../Builds"))
         {
             Directory.CreateDirectory(Application.dataPath + "/../Builds");
@@ -238,7 +244,22 @@ public class BuildManager : EditorWindow
                 break;
         }
 
-        BuildPipeline.BuildPlayer(scenes.ToArray(), exeName, bt, bo);
+        BuildPlayerOptions bpo = new();
+        bpo.scenes = scenes.ToArray();
+        bpo.locationPathName = exeName;
+        bpo.target = bt;
+        bpo.options = bo;
+
+        if (bms.DedicatedServerBuild)
+        {
+            bpo.subtarget = (int)StandaloneBuildSubtarget.Server;
+        }
+        else
+        {
+            bpo.subtarget = (int)StandaloneBuildSubtarget.Player;
+        }
+
+        BuildPipeline.BuildPlayer(bpo);
 
         // Copy files from Assets/_Project/BuildOutput/win to the built folder for Windows
         if (bt == BuildTarget.StandaloneWindows || bt == BuildTarget.StandaloneWindows64)

@@ -7,6 +7,7 @@ public class BuildManagerSettings : ScriptableObject
     public string Branch = "BranchName";
     public string VersionPrefix = "";
     public string ExeName = "Game";
+    public bool DedicatedServerBuild = false;
     public bool BuildAddressables = true;
     public bool RemoveManifestFilesFromAssetBundleBuild = false;
     public bool BuildAssetBundles = true;
