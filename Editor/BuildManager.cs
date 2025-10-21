@@ -37,6 +37,7 @@ public class BuildManager : EditorWindow
 
         bms.DedicatedServerBuild = GUILayout.Toggle(bms.DedicatedServerBuild, "Dedicated Server (Windows, Linux and macOS only)");
         bms.BuildAssetBundles = GUILayout.Toggle(bms.BuildAssetBundles, "Build AssetBundles");
+        bms.DeleteBundlesBeforeBuilding = GUILayout.Toggle(bms.DeleteBundlesBeforeBuilding, "Delete AssetBundles before building AssetBundles");
         bms.RemoveManifestFilesFromAssetBundleBuild = GUILayout.Toggle(bms.RemoveManifestFilesFromAssetBundleBuild, "Remove manifest files from AssetBundle build");
         bms.BuildAddressables = GUILayout.Toggle(bms.BuildAddressables, "Build Addressables");
         bms.CopyPDBFiles = GUILayout.Toggle(bms.CopyPDBFiles, "Copy PDB files (Mono Windows, Linux and macOS only)");
@@ -367,12 +368,31 @@ public class BuildManager : EditorWindow
         string bundleDirectory = "Assets/StreamingAssets/Bundles";
         string bundleDirectoryName = "Bundles";
 
+        if (bms.DeleteBundlesBeforeBuilding && Directory.Exists(bundleDirectory))
+        {
+            DirectoryInfo currentBuildFiles = new(bundleDirectory);
+            foreach (var file in currentBuildFiles.EnumerateFiles())
+            {
+                file.Delete();
+            }
+        }
+
         if (!Directory.Exists(bundleDirectory))
         {
             Directory.CreateDirectory(bundleDirectory);
         }
 
+        AssetDatabase.Refresh();
+
         BuildPipeline.BuildAssetBundles(bundleDirectory, bms.AssetBundleBuildOptions, bt);
+
+        DirectoryInfo buildFiles = new(bundleDirectory);
+
+        if (!buildFiles.Exists)
+        {
+            Debug.LogError("(BuildManager) Assets/StreamingAssets/Bundles doesn't exist? (Failed)");
+            return;
+        }
 
         // Removes manifest files from the built AssetBundles
         if (bms.RemoveManifestFilesFromAssetBundleBuild)
@@ -381,26 +401,31 @@ public class BuildManager : EditorWindow
             File.Delete(bundleDirectory + "/" + bundleDirectoryName + ".meta");
             File.Delete(bundleDirectory + "/" + bundleDirectoryName + ".manifest");
             File.Delete(bundleDirectory + "/" + bundleDirectoryName + ".manifest.meta");
-
-            DirectoryInfo buildFiles = new(bundleDirectory);
-            if (buildFiles.Exists)
+            
+            foreach (var file in buildFiles.EnumerateFiles())
             {
-                foreach (var file in buildFiles.EnumerateFiles())
+                if (file.Extension == ".manifest")
                 {
-                    if (file.Extension == ".manifest")
+                    File.Delete(file.FullName);
+                    if (File.Exists(file.FullName + ".meta"))
                     {
-                        File.Delete(file.FullName);
-                        if (File.Exists(file.FullName + ".meta"))
-                        {
-                            File.Delete(file.FullName + ".meta");
-                        }
+                        File.Delete(file.FullName + ".meta");
                     }
                 }
             }
-            else
+        }
+
+        // Adds file extensions to bundles
+        foreach (var file in buildFiles.EnumerateFiles())
+        {
+            if (file.Extension == "")
             {
-                Debug.LogError("(BuildManager) Assets/StreamingAssets/Bundles doesn't exist? (Failed)");
-                return;
+                if (File.Exists(file.FullName + ".bundle"))
+                {
+                    File.Delete(file.FullName + ".bundle");
+                }
+
+                File.Move(file.FullName, file.FullName + ".bundle");
             }
         }
     }
