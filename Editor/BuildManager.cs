@@ -43,6 +43,7 @@ public class BuildManager : EditorWindow
         bms.CopyPDBFiles = GUILayout.Toggle(bms.CopyPDBFiles, "Copy PDB files (Mono Windows, Linux and macOS only)");
         bms.RemoveBurstDebugInformation = GUILayout.Toggle(bms.RemoveBurstDebugInformation, "Remove BurstDebugInformation");
         bms.IncrementBuildNumber = GUILayout.Toggle(bms.IncrementBuildNumber, "Increment Build Number");
+        bms.AddGitCommitHashToVersion = GUILayout.Toggle(bms.AddGitCommitHashToVersion, "Add Git commit hash to version");
         bms.CompressionType = (CompressionType)EditorGUILayout.EnumPopup("Compression Type", bms.CompressionType);
         bms.PlayerBuildOptions = (BuildOptions)EditorGUILayout.EnumFlagsField("Player Build Options", bms.PlayerBuildOptions);
         bms.AssetBundleBuildOptions = (BuildAssetBundleOptions)EditorGUILayout.EnumFlagsField("AssetBundle Build Options", bms.AssetBundleBuildOptions);
@@ -96,7 +97,7 @@ public class BuildManager : EditorWindow
             SaveSettings();
         }
 
-        PlayerSettings.bundleVersion = bms.VersionPrefix + "_" + bms.BuildCount.ToString() + " (" + bms.Branch + ")";
+        PlayerSettings.bundleVersion = bms.VersionPrefix + "_" + bms.BuildCount.ToString() + " (" + bms.Branch + ", "+ GetRepositoryHash() + ")";
         PlayerSettings.Android.bundleVersionCode = bms.BuildCount;
         PlayerSettings.macOS.buildNumber = bms.BuildCount.ToString();
 
@@ -183,7 +184,7 @@ public class BuildManager : EditorWindow
             }
         }
 
-        if (bms == null)
+        if (!bms)
         {
             LoadBms();
         }
@@ -353,7 +354,7 @@ public class BuildManager : EditorWindow
     [MenuItem("Tools/Build AssetBundles")]
     private static void BuildAssetBundlesMenuItem()
     {
-        if (bms == null)
+        if (!bms)
         {
             LoadBms();
         }
@@ -430,11 +431,30 @@ public class BuildManager : EditorWindow
         }
     }
 
-    public static void SaveSettings()
+    private static void SaveSettings()
     {
         EditorUtility.SetDirty(bms);
         AssetDatabase.Refresh();
     }
+    
+    private static int maxWaitTime = 1000;
+    private static string GetRepositoryHash()
+    {
+        var prc = new System.Diagnostics.Process();
+        prc.StartInfo.FileName = "git";
+        prc.StartInfo.Arguments = "-C \"" + Path.GetDirectoryName(Application.dataPath).Replace("\\", "/") + "\" show-ref " + bms.Branch + " --hash";
+        Debug.Log("Git arguments: " + prc.StartInfo.Arguments);
+        prc.StartInfo.RedirectStandardOutput = true;
+        prc.StartInfo.UseShellExecute = false;
+        prc.Start();
+        prc.WaitForExit(maxWaitTime);
+
+        using var reader = new StringReader(prc.StandardOutput.ReadToEnd());
+        string first = reader.ReadLine();
+        
+        return first;
+    }
+    
 
     private static void LoadBms()
     {
