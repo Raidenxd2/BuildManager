@@ -1,6 +1,6 @@
 {
   "name": "com.raiden.buildmanager",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "displayName": "Build Manager",
   "unity": "2022.3",
   "description": "Build Manager",

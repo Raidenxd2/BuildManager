@@ -16,6 +16,7 @@ public class BuildManagerSettings : ScriptableObject
     public bool RemoveBurstDebugInformation = true;
     public bool IncrementBuildNumber = true;
     public bool AddGitCommitHashToVersion;
+    public MobileTextureSubtarget AndroidTextureSubtarget = MobileTextureSubtarget.Generic;
     public BuildOptions PlayerBuildOptions = BuildOptions.ShowBuiltPlayer;
     public BuildAssetBundleOptions AssetBundleBuildOptions = BuildAssetBundleOptions.AssetBundleStripUnityVersion;
     public CompressionType CompressionType;

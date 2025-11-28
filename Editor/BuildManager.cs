@@ -44,6 +44,7 @@ public class BuildManager : EditorWindow
         bms.RemoveBurstDebugInformation = GUILayout.Toggle(bms.RemoveBurstDebugInformation, "Remove BurstDebugInformation");
         bms.IncrementBuildNumber = GUILayout.Toggle(bms.IncrementBuildNumber, "Increment Build Number");
         bms.AddGitCommitHashToVersion = GUILayout.Toggle(bms.AddGitCommitHashToVersion, "Add Git commit hash to version");
+        bms.AndroidTextureSubtarget = (MobileTextureSubtarget)EditorGUILayout.EnumPopup("Android Texture Compression", bms.AndroidTextureSubtarget);
         bms.CompressionType = (CompressionType)EditorGUILayout.EnumPopup("Compression Type", bms.CompressionType);
         bms.PlayerBuildOptions = (BuildOptions)EditorGUILayout.EnumFlagsField("Player Build Options", bms.PlayerBuildOptions);
         bms.AssetBundleBuildOptions = (BuildAssetBundleOptions)EditorGUILayout.EnumFlagsField("AssetBundle Build Options", bms.AssetBundleBuildOptions);
@@ -259,6 +260,11 @@ public class BuildManager : EditorWindow
         else
         {
             bpo.subtarget = (int)StandaloneBuildSubtarget.Player;
+        }
+
+        if (bt == BuildTarget.Android)
+        {
+            bpo.subtarget = (int)bms.AndroidTextureSubtarget;
         }
 
         BuildPipeline.BuildPlayer(bpo);
