@@ -314,8 +314,8 @@ public class BuildManager : EditorWindow
             }
         }
 
-        // Copy files from Assets/CopyToStreamingAssets only for Windows or Linux
-        if (bt == BuildTarget.StandaloneWindows || bt == BuildTarget.StandaloneWindows64 || bt == BuildTarget.StandaloneLinux64)
+        // Copy files from Assets/CopyToStreamingAssets only for Windows, Linux, and macOS
+        if (bt == BuildTarget.StandaloneWindows || bt == BuildTarget.StandaloneWindows64 || bt == BuildTarget.StandaloneLinux64 || bt == BuildTarget.StandaloneOSX)
         {
             if (Directory.Exists("Assets/CopyToStreamingAssets"))
             {
@@ -326,11 +326,25 @@ public class BuildManager : EditorWindow
                 {
                     if (file.Extension == ".meta")
                     {
-
+                        
                     }
                     else
                     {
-                        File.Copy("Assets/CopyToStreamingAssets/" + file.Name, BuildPath + "/" + bms.ExeName + "_Data/StreamingAssets/" + Path.GetFileName(file.Name));
+                        string targetPath = "";
+                        
+                        if (bt == BuildTarget.StandaloneOSX)
+                        {
+                            targetPath = BuildPath + "/" + bms.ExeName + ".app/Contents/Resources/Data/StreamingAssets/" + Path.GetFileName(file.Name);
+                        }
+                        else
+                        {
+                            targetPath = BuildPath + "/" + bms.ExeName + "_Data/StreamingAssets/" + Path.GetFileName(file.Name);
+                        }
+                        
+                        if (!File.Exists(targetPath))
+                        {
+                            File.Copy("Assets/CopyToStreamingAssets/" + file.Name, BuildPath + "/" + bms.ExeName + "_Data/StreamingAssets/" + Path.GetFileName(file.Name));
+                        }
                     }
                 }
             }
