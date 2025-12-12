@@ -7,7 +7,7 @@ public class BuildManagerSettings : ScriptableObject
     public string Branch = "BranchName";
     public string VersionPrefix = "";
     public string ExeName = "Game";
-    public bool DedicatedServerBuild = false;
+    public bool DedicatedServerBuild;
     public bool BuildAddressables = true;
     public bool RemoveManifestFilesFromAssetBundleBuild;
     public bool BuildAssetBundles = true;
@@ -15,8 +15,12 @@ public class BuildManagerSettings : ScriptableObject
     public bool CopyPDBFiles = true;
     public bool RemoveBurstDebugInformation = true;
     public bool IncrementBuildNumber = true;
+    public bool AddVersionToBuildFolder;
     public bool AddGitCommitHashToVersion;
     public MobileTextureSubtarget AndroidTextureSubtarget = MobileTextureSubtarget.Generic;
+#if (UNITY_ANDROID || BUILDMANAGER_FORCE_ANDROID_SETTINGS) && UNITY_6000_2_OR_NEWER
+    public Unity.Android.Types.AndroidLinkTimeOptimization AndroidLinkTimeOptimization;
+#endif
     public BuildOptions PlayerBuildOptions = BuildOptions.ShowBuiltPlayer;
     public BuildAssetBundleOptions AssetBundleBuildOptions = BuildAssetBundleOptions.AssetBundleStripUnityVersion;
     public CompressionType CompressionType;

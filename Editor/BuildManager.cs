@@ -44,7 +44,13 @@ public class BuildManager : EditorWindow
         bms.RemoveBurstDebugInformation = GUILayout.Toggle(bms.RemoveBurstDebugInformation, "Remove BurstDebugInformation");
         bms.IncrementBuildNumber = GUILayout.Toggle(bms.IncrementBuildNumber, "Increment Build Number");
         bms.AddGitCommitHashToVersion = GUILayout.Toggle(bms.AddGitCommitHashToVersion, "Add Git commit hash to version");
-        bms.AndroidTextureSubtarget = (MobileTextureSubtarget)EditorGUILayout.EnumPopup("Android Texture Compression", bms.AndroidTextureSubtarget);
+        bms.AddVersionToBuildFolder = GUILayout.Toggle(bms.AddVersionToBuildFolder, "Add version to build folder");
+#if (UNITY_ANDROID || BUILDMANAGER_FORCE_ANDROID_SETTINGS) && UNITY_6000_2_OR_NEWER
+        bms.AndroidLinkTimeOptimization = (Unity.Android.Types.AndroidLinkTimeOptimization)EditorGUILayout.EnumPopup(new GUIContent("Link time optimization", "Requires either the Meta Quest profile to be enabled or a patch to allow using ThinLTO on other profiles."), bms.AndroidLinkTimeOptimization);
+#endif
+#if UNITY_ANDROID || BUILDMANAGER_FORCE_ANDROID_SETTINGS
+        bms.AndroidTextureSubtarget = (MobileTextureSubtarget)EditorGUILayout.EnumPopup("Texture Compression", bms.AndroidTextureSubtarget);
+#endif        
         bms.CompressionType = (CompressionType)EditorGUILayout.EnumPopup("Compression Type", bms.CompressionType);
         bms.PlayerBuildOptions = (BuildOptions)EditorGUILayout.EnumFlagsField("Player Build Options", bms.PlayerBuildOptions);
         bms.AssetBundleBuildOptions = (BuildAssetBundleOptions)EditorGUILayout.EnumFlagsField("AssetBundle Build Options", bms.AssetBundleBuildOptions);
@@ -98,7 +104,7 @@ public class BuildManager : EditorWindow
             SaveSettings();
         }
 
-        PlayerSettings.bundleVersion = bms.VersionPrefix + "_" + bms.BuildCount.ToString() + " (" + bms.Branch + ", "+ GetRepositoryHash() + ")";
+        PlayerSettings.bundleVersion = bms.VersionPrefix + "_" + bms.BuildCount + " (" + bms.Branch + ", " + GetRepositoryHash() + ")";
         PlayerSettings.Android.bundleVersionCode = bms.BuildCount;
         PlayerSettings.macOS.buildNumber = bms.BuildCount.ToString();
 
@@ -202,6 +208,11 @@ public class BuildManager : EditorWindow
             BuildPath += "_" + "DedicatedServer";
         }
 
+        if (bms.AddVersionToBuildFolder)
+        {
+            BuildPath += " (" + PlayerSettings.bundleVersion + ")";
+        }
+
         if (!Directory.Exists(Application.dataPath + "/../Builds"))
         {
             Directory.CreateDirectory(Application.dataPath + "/../Builds");
@@ -212,7 +223,7 @@ public class BuildManager : EditorWindow
             Directory.CreateDirectory(BuildPath);
         }
 
-        string exeName = BuildPath + "/default.exe";
+        string exeName = "";
         
         switch (bt)
         {
