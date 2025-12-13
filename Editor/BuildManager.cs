@@ -14,7 +14,11 @@ public class BuildManager : EditorWindow
     public static void ShowWindow()
     {
         // If Assets/BuildManagerSettings.asset doesn't exist, create it
+#if UNITY_6000_0_OR_NEWER
         if (!AssetDatabase.AssetPathExists("Assets/BuildManagerSettings.asset"))
+#else
+        if (AssetDatabase.GetMainAssetTypeAtPath("Assets/BuildManagerSettings.asset") == null)
+#endif
         {
             BuildManagerSettings asset = CreateInstance<BuildManagerSettings>();
 
@@ -30,7 +34,7 @@ public class BuildManager : EditorWindow
 
     void OnGUI()
     {
-        if (bms == null)
+        if (!bms)
         {
             LoadBms();
         }
@@ -142,7 +146,7 @@ public class BuildManager : EditorWindow
                 break;
         }
 
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN && UNITY_6000_0_OR_NEWER
         if (winArm64)
         {
             UnityEditor.WindowsStandalone.UserBuildSettings.architecture = UnityEditor.Build.OSArchitecture.ARM64;
